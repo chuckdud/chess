@@ -1,15 +1,67 @@
 import numpy as np
 from colorama import Fore, Back, Style
 
-BLACK, WHITE = 0, 1
+WHITE, BLACK = 0, 1
 LIGHT, DARK = 2, 3
 POTENTIAL = 4
+
+move_labels = ['a', 'c', 'd', 'e', 'f', 'g', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+               'q', 's', 't', 'u', 'v', 'w', 'y', 'z']
+
+
+def dictify(actions):
+    ret_dict = {}
+    label_num = 0
+    for a in actions:
+        ret_dict[move_labels[label_num]] = a
+        label_num += 1
+
+    return ret_dict
 
 
 def other_player(color):
     return BLACK if color == WHITE else WHITE
 
+
 def init_board():
+    board = np.ndarray((8, 8), dtype=Space)
+    dark = 0
+    for y in range(8):
+        for x in range(8):
+            if dark == 0:
+                board[y][x] = Space(DARK, x, y)
+                dark += 1
+            else:
+                board[y][x] = Space(LIGHT, x, y)
+                dark = 0
+        if dark == 0:
+            dark = 1
+        else:
+            dark = 0
+    for i in range(8):
+        board[1][i].piece = Pawn(BLACK, i, 1)
+    board[0][0].piece = Rook(BLACK, 0, 0)
+    board[0][7].piece = Rook(BLACK, 7, 0)
+    board[0][1].piece = Knight(BLACK, 1, 0)
+    board[0][6].piece = Knight(BLACK, 6, 0)
+    board[0][2].piece = Bishop(BLACK, 2, 0)
+    board[0][5].piece = Bishop(BLACK, 5, 0)
+    board[0][3].piece = Queen(BLACK, 3, 0)
+    board[0][4].piece = King(BLACK, 4, 0)
+    for i in range(8):
+        board[6][i].piece = Pawn(WHITE, i, 6)
+    board[7][0].piece = Rook(WHITE, 0, 7)
+    board[7][7].piece = Rook(WHITE, 7, 7)
+    board[7][1].piece = Knight(WHITE, 1, 7)
+    board[7][6].piece = Knight(WHITE, 6, 7)
+    board[7][2].piece = Bishop(WHITE, 2, 7)
+    board[7][5].piece = Bishop(WHITE, 5, 7)
+    board[7][3].piece = Queen(WHITE, 3, 7)
+    board[7][4].piece = King(WHITE, 4, 7)
+    return board
+
+
+def alt_init_board():
     board = np.ndarray((8, 8), dtype=Space)
     dark = 0
     for y in range(8):
@@ -54,7 +106,9 @@ class State:
         self.check = ""
 
     def __str__(self):
-        ret = Style.RESET_ALL + "   a  b  c  d  e  f  g  h \n"
+        str_move = "BLACK" if self.to_move == BLACK else "WHITE"
+        ret = f"To move: {str_move}\n"
+        ret += Style.RESET_ALL + "   a  b  c  d  e  f  g  h \n"
         for row in self.board:
             ret += str(8 - row[0].y) + " "
             for space in row:
@@ -66,18 +120,49 @@ class State:
         ret += "   a  b  c  d  e  f  g  h \n"
         return ret
 
-    def print_with_actions(self, actions):
-        to_print = np.zeros((8, 8))
-        for a in actions:
-            to_print[a.new_y][a.new_x] = POTENTIAL
-        ret = Style.RESET_ALL + "   a  b  c  d  e  f  g  h \n"
+    def apply_action(self, a):
+        p = self.board[a.old_y][a.old_x].piece
+        p.y = a.new_y
+        p.x = a.new_x
+        if isinstance(p, Pawn):
+            p.moved = True
+            if abs(a.new_y - a.old_y) == 2:
+                p.just_doubled = True
+            else:
+                p.just_doubled = False
+        self.board[a.old_y][a.old_x].piece = None
+        self.board[a.new_y][a.new_x].piece = p
+        if a.passant:
+            print("wow, en passant")
+            self.board[a.passant_y][a.passant_x].piece = None
+
+    def print_with_actions(self, actions, action_dict):
+        # action_counter = 0
+        # to_print = np.zeros((8, 8))
+        # for a in actions:
+        #     to_print[a.new_y][a.new_x] = POTENTIAL
+        str_move = "BLACK" if self.to_move == BLACK else "WHITE"
+        ret = f"To move: {str_move}\n"
+        ret += Style.RESET_ALL + "   a  b  c  d  e  f  g  h \n"
 
         for y in range(8):
             ret += str(8 - y) + " "
             for x in range(8):
-                if self.board[y][x].is_empty() and to_print[y][x] == POTENTIAL:
-                    ret += Back.RED + "   " + Style.RESET_ALL
-                elif self.board[y][x].is_empty():
+                found_action = None
+                for a in actions:
+                    if a.new_y == y and a.new_x == x:
+                        found_action = a
+                        break
+                if found_action is not None:
+                    for lbl in move_labels:
+                        if action_dict[lbl] == found_action:
+                            ret += Back.RED + f" {lbl} " + Style.RESET_ALL
+                            break
+                    continue
+                # if self.board[y][x].is_empty() and to_print[y][x] == POTENTIAL:
+                #     ret += Back.RED + f"{move_labels[action_counter]}" + Style.RESET_ALL
+                #     action_counter += 1
+                if self.board[y][x].is_empty():
                     ret += str(self.board[y][x])
                 else:
                     ret += str(self.board[y][x]) + str(self.board[y][x].piece)
@@ -92,6 +177,14 @@ class Action:
         self.old_y = old_y
         self.new_x = new_x
         self.new_y = new_y
+        self.passant = False
+        self.passant_x = -1
+        self.passant_y = -1
+
+    def set_passant(self, x, y):
+        self.passant = True
+        self.passant_x = x
+        self.passant_y = y
 
 
 class Space:
@@ -123,15 +216,16 @@ class Piece:
         self.x = x
         self.y = y
 
+
     def find_actions(self, board):
         pass
 
 
 class Pawn(Piece):
-
     def __init__(self, color, x, y):
-        super(Pawn, self).__init__(color, x, y)
+        super().__init__(color, x, y)
         self.moved = False
+        self.just_doubled = False
 
     def __str__(self):
         if self.color == BLACK:
@@ -141,38 +235,54 @@ class Pawn(Piece):
 
     def find_actions(self, board):
         actions = []
-        left = self.x - 1
-        if left < 0:
-            left = 0
-        right = self.x + 1
-        if right > 7:
-            right = 7
+        left = True
+        right = True
+        if self.x - 1 < 0:
+            left = False
+        right = True
+        if self.x + 1 > 7:
+            right = False
+        # TODO: prevent moving into check
         if self.color == WHITE:
-            if not self.moved and board[self.y-2][self.x].is_empty():
-                actions.append(Action(self.x, self.y, self.x, self.y-2))
-                # must ensure that not moving into check
-            if board[self.y-1][self.x].is_empty():
-                actions.append(Action(self.x, self.y, self.x, self.y-1))
-                # must ensure that not moving into check
-            if not board[self.y-1][left].is_empty():
-                actions.append(Action(self.x, self.y, left, self.y-1))
-                # must ensure that not moving into check
-            if not board[self.y-1][right].is_empty():
-                actions.append(Action(self.x, self.y, right, self.y-1))
-                # must ensure that not moving into check
+            if not self.moved and board[self.y - 2][self.x].is_empty():
+                actions.append(Action(self.x, self.y, self.x, self.y - 2))
+            if board[self.y - 1][self.x].is_empty():
+                actions.append(Action(self.x, self.y, self.x, self.y - 1))
+            if left and not board[self.y - 1][self.x - 1].is_empty():
+                actions.append(Action(self.x, self.y, self.x - 1, self.y - 1))
+            if right and not board[self.y - 1][self.x + 1].is_empty():
+                actions.append(Action(self.x, self.y, self.x + 1, self.y - 1))
+            # en passant
+            if left and isinstance(board[self.y][self.x - 1].piece, Pawn):
+                if board[self.y][self.x - 1].piece.just_doubled:
+                    a = Action(self.x, self.y, self.x - 1, self.y - 1)
+                    a.set_passant(self.x - 1, self.y)
+                    actions.append(a)
+            if right and isinstance(board[self.y][self.x + 1].piece, Pawn):
+                if board[self.y][self.x + 1].piece.just_doubled:
+                    a = Action(self.x, self.y, self.x + 1, self.y - 1)
+                    a.set_passant(self.x + 1, self.y)
+                    actions.append(a)
         if self.color == BLACK:
-            if not self.moved and board[self.y+2][self.x].is_empty():
-                actions.append(Action(self.x, self.y, self.x, self.y+2))
-                # must ensure that not moving into check
-            if board[self.y+1][self.x].is_empty():
-                actions.append(Action(self.x, self.y, self.x, self.y+1))
-                # must ensure that not moving into check
-            if not board[self.y+1][left].is_empty():
-                actions.append(Action(self.x, self.y, left, self.y-1))
-                # must ensure that not moving into check
-            if not board[self.y+1][right].is_empty():
-                actions.append(Action(self.x, self.y, right, self.y-1))
-                # must ensure that not moving into check
+            if not self.moved and board[self.y + 2][self.x].is_empty():
+                actions.append(Action(self.x, self.y, self.x, self.y + 2))
+            if board[self.y + 1][self.x].is_empty():
+                actions.append(Action(self.x, self.y, self.x, self.y + 1))
+            if left and not board[self.y + 1][self.x - 1].is_empty():
+                actions.append(Action(self.x, self.y, self.x - 1, self.y + 1))
+            if right and not board[self.y + 1][self.x + 1].is_empty():
+                actions.append(Action(self.x, self.y, self.x + 1, self.y + 1))
+            # en passant
+            if left and isinstance(board[self.y][self.x - 1].piece, Pawn):
+                if board[self.y][self.x - 1].piece.just_doubled:
+                    a = Action(self.x, self.y, self.x - 1, self.y - 1)
+                    a.set_passant(self.x - 1, self.y)
+                    actions.append(a)
+            if right and isinstance(board[self.y][self.x + 1].piece, Pawn):
+                if board[self.y][self.x + 1].piece.just_doubled:
+                    a = Action(self.x, self.y, self.x + 1, self.y - 1)
+                    a.set_passant(self.x - 1, self.y)
+                    actions.append(a)
         return actions
 
 
@@ -226,10 +336,27 @@ def user_move(state):
     y = 8 - (ord(y_in) - ord('0'))
     p = state.board[y][x].piece
     if p is None or p.color != state.to_move:
+        print("Invalid selection. Try again.")
         return -1
     print(f"Selected {type(p).__name__} at {x_in}{y_in}")
     actions = p.find_actions(state.board)
-    print(state.print_with_actions(actions))
+    if len(actions) > 0:
+        action_dict = dictify(actions)
+        print(state.print_with_actions(actions, action_dict))
+        print("Please enter the character associated with a move, or 'x' to cancel.")
+        sel = input()
+        if sel == 'x':
+            return -1
+        if not sel in action_dict:
+            print("Invalid input. Please try again.")
+            return -1
+        action = action_dict.get(sel)
+        state.apply_action(action)
+        return 0
+
+    else:
+        print("Selected piece cannot move. Please try again.")
+        return -1
 
 
 def play():
@@ -238,8 +365,10 @@ def play():
     while True:
         x = user_move(s)
         while x == -1:
-            print("Invalid selection. Try again.")
+            print(s)
             x = user_move(s)
         s.to_move = other_player(s.to_move)
+        print(s)
+
 
 play()
