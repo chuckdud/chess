@@ -293,6 +293,48 @@ class Rook(Piece):
         else:
             return Fore.LIGHTWHITE_EX + Style.BRIGHT + " r "
 
+    def find_actions(self, board):
+        actions = []
+
+        # LEFT
+        i = 1
+        while self.x - i >= 0 and board[self.y][self.x - i].is_empty():
+            actions.append(Action(self.x, self.y, self.x - 1, self.y))
+            i += 1
+        # found opponent's piece
+        if self.x - i >= 0 and board[self.y][self.x - i].piece.color == other_player(self.color):
+            actions.append(Action(self.x, self.y, self.x - i, self.y))
+
+        # RIGHT
+        i = 1
+        while self.x + i < 8 and board[self.y][self.x + i].is_empty():
+            actions.append(Action(self.x, self.y, self.x + i, self.y))
+            i += 1
+        # found opponent's piece
+        if self.x + i < 8 and board[self.y][self.x + i].piece.color == other_player(self.color):
+            actions.append(Action(self.x, self.y, self.x + i, self.y))
+
+        # UP
+        i = 1
+        while self.y - i >= 0 and board[self.y - i][self.x].is_empty():
+            actions.append(Action(self.x, self.y, self.x, self.y - i))
+            i += 1
+        # found opponent's piece
+        if self.y - i >= 0 and board[self.y - i][self.x].piece.color == other_player(self.color):
+            actions.append(Action(self.x, self.y, self.x, self.y - i))
+
+        # DOWN
+        i = 1
+        while self.y + i < 8 and board[self.y + i][self.x].is_empty():
+            actions.append(Action(self.x, self.y, self.x, self.y + i))
+            i += 1
+        # found opponent's piece
+        if self.y + i < 8 and board[self.y + i][self.x].piece.color == other_player(self.color):
+            actions.append(Action(self.x, self.y, self.x, self.y + i))
+
+        return actions
+
+
 
 class Knight(Piece):
     def __str__(self):
