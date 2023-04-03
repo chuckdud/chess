@@ -156,7 +156,7 @@ class State:
                 if found_action is not None:
                     for lbl in move_labels:
                         if action_dict[lbl] == found_action:
-                            ret += Back.RED + f" {lbl} " + Style.RESET_ALL
+                            ret += Back.RED + Fore.WHITE + f" {lbl} " + Style.RESET_ALL
                             break
                     continue
                 # if self.board[y][x].is_empty() and to_print[y][x] == POTENTIAL:
@@ -215,7 +215,6 @@ class Piece:
         self.color = color
         self.x = x
         self.y = y
-
 
     def find_actions(self, board):
         pass
@@ -335,13 +334,51 @@ class Rook(Piece):
         return actions
 
 
-
 class Knight(Piece):
     def __str__(self):
         if self.color == BLACK:
             return Fore.BLACK + Style.BRIGHT + " h "
         else:
             return Fore.LIGHTWHITE_EX + Style.BRIGHT + " h "
+
+    def find_actions(self, board):
+        actions = []
+        # LEFT UP
+        if self.x > 1 and self.y > 0 and \
+                (board[self.y + 1][self.x - 2].is_empty() or board[self.y + 1][self.x - 2].piece.color == other_player(self.color)):
+            actions.append(Action(self.x, self.y, self.x - 2, self.y - 1))
+        # LEFT DOWN
+        if self.x > 1 and self.y < 7 and \
+                (board[self.y + 1][self.x - 2].is_empty() or board[self.y + 1][self.x - 2].piece.color == other_player(self.color)):
+            actions.append(Action(self.x, self.y, self.x - 2, self.y + 1))
+
+        # RIGHT UP
+        if self.x < 6 and self.y > 0 and \
+                (board[self.y - 1][self.x + 2].is_empty() or board[self.y - 1][self.x + 2].piece.color == other_player(self.color)):
+            actions.append(Action(self.x, self.y, self.x + 2, self.y - 1))
+        # RIGHT DOWN
+        if self.x < 6 and self.y < 7 and \
+                (board[self.y + 1][self.x + 2].is_empty() or board[self.y + 1][self.x + 2].piece.color == other_player(self.color)):
+            actions.append(Action(self.x, self.y, self.x + 2, self.y + 1))
+
+        # DOWN LEFT
+        if self.x > 0 and self.y < 6 and \
+                (board[self.y + 2][self.x - 1].is_empty() or board[self.y + 2][self.x - 1].piece.color == other_player(self.color)):
+            actions.append(Action(self.x, self.y, self.x - 1, self.y + 2))
+        # DOWN RIGHT
+        if self.x < 7 and self.y < 6 and \
+                (board[self.y + 2][self.x + 1].is_empty() or board[self.y + 2][self.x + 1].piece.color == other_player(self.color)):
+            actions.append(Action(self.x, self.y, self.x + 1, self.y + 2))
+
+        # UP LEFT
+        if self.x > 0 and self.y > 1 and \
+                (board[self.y - 2][self.x - 1].is_empty() or board[self.y - 2][self.x - 1].piece.color == other_player(self.color)):
+            actions.append(Action(self.x, self.y, self.x - 1, self.y - 2))
+        # UP RIGHT
+        if self.x < 7 and self.y > 1 and \
+                (board[self.y - 2][self.x + 1].is_empty() or board[self.y - 2][self.x + 1].piece.color == other_player(self.color)):
+            actions.append(Action(self.x, self.y, self.x + 1, self.y - 2))
+        return actions
 
 
 class Bishop(Piece):
