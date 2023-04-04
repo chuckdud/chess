@@ -243,41 +243,57 @@ class Pawn(Piece):
             right = False
         # TODO: prevent moving into check
         if self.color == WHITE:
-            if not self.moved and board[self.y - 2][self.x].is_empty():
-                actions.append(Action(self.x, self.y, self.x, self.y - 2))
+            # forward 1
             if board[self.y - 1][self.x].is_empty():
                 actions.append(Action(self.x, self.y, self.x, self.y - 1))
-            if left and not board[self.y - 1][self.x - 1].is_empty():
+            # forward 2
+            if not self.moved and board[self.y - 2][self.x].is_empty():
+                actions.append(Action(self.x, self.y, self.x, self.y - 2))
+            # capture left
+            if left and not board[self.y - 1][self.x - 1].is_empty() and \
+                    board[self.y - 1][self.x - 1].piece.color == other_player(self.color):
                 actions.append(Action(self.x, self.y, self.x - 1, self.y - 1))
-            if right and not board[self.y - 1][self.x + 1].is_empty():
+            # capture right
+            if right and not board[self.y - 1][self.x + 1].is_empty() and \
+                    board[self.y - 1][self.x + 1].piece.color == other_player(self.color):
                 actions.append(Action(self.x, self.y, self.x + 1, self.y - 1))
             # en passant
-            if left and isinstance(board[self.y][self.x - 1].piece, Pawn):
+            if left and isinstance(board[self.y][self.x - 1].piece, Pawn) and \
+                    board[self.y][self.x - 1].piece.color == other_player(self.color):
                 if board[self.y][self.x - 1].piece.just_doubled:
                     a = Action(self.x, self.y, self.x - 1, self.y - 1)
                     a.set_passant(self.x - 1, self.y)
                     actions.append(a)
-            if right and isinstance(board[self.y][self.x + 1].piece, Pawn):
+            if right and isinstance(board[self.y][self.x + 1].piece, Pawn) and \
+                    board[self.y][self.x + 1].piece.color == other_player(self.color):
                 if board[self.y][self.x + 1].piece.just_doubled:
                     a = Action(self.x, self.y, self.x + 1, self.y - 1)
                     a.set_passant(self.x + 1, self.y)
                     actions.append(a)
         if self.color == BLACK:
-            if not self.moved and board[self.y + 2][self.x].is_empty():
-                actions.append(Action(self.x, self.y, self.x, self.y + 2))
+            # forward 1
             if board[self.y + 1][self.x].is_empty():
                 actions.append(Action(self.x, self.y, self.x, self.y + 1))
-            if left and not board[self.y + 1][self.x - 1].is_empty():
+            # forward 2
+            if not self.moved and board[self.y + 2][self.x].is_empty():
+                actions.append(Action(self.x, self.y, self.x, self.y + 2))
+            # capture left
+            if left and not board[self.y + 1][self.x - 1].is_empty() and \
+                    board[self.y + 1][self.x - 1].piece.color == other_player(self.color):
                 actions.append(Action(self.x, self.y, self.x - 1, self.y + 1))
-            if right and not board[self.y + 1][self.x + 1].is_empty():
+            # capture right
+            if right and not board[self.y + 1][self.x + 1].is_empty() and \
+                    board[self.y + 1][self.x + 1].piece.color == other_player(self.color):
                 actions.append(Action(self.x, self.y, self.x + 1, self.y + 1))
             # en passant
-            if left and isinstance(board[self.y][self.x - 1].piece, Pawn):
+            if left and isinstance(board[self.y][self.x - 1].piece, Pawn) and \
+                    board[self.y][self.x - 1].piece.color == other_player(self.color):
                 if board[self.y][self.x - 1].piece.just_doubled:
                     a = Action(self.x, self.y, self.x - 1, self.y - 1)
                     a.set_passant(self.x - 1, self.y)
                     actions.append(a)
-            if right and isinstance(board[self.y][self.x + 1].piece, Pawn):
+            if right and isinstance(board[self.y][self.x + 1].piece, Pawn) and \
+                    board[self.y][self.x + 1].piece.color == other_player(self.color):
                 if board[self.y][self.x + 1].piece.just_doubled:
                     a = Action(self.x, self.y, self.x + 1, self.y - 1)
                     a.set_passant(self.x - 1, self.y)
@@ -388,6 +404,46 @@ class Bishop(Piece):
         else:
             return Fore.LIGHTWHITE_EX + Style.BRIGHT + " b "
 
+    def find_actions(self, board):
+        actions = []
+
+        # UP LEFT
+        i = 1
+        while self.x - i >= 0 and self.y - i >= 0 and board[self.y - i][self.x - i].is_empty():
+            actions.append(Action(self.x, self.y, self.x - i, self.y - i))
+            i += 1
+        # found opponent's pieces
+        if self.x - i >= 0 and self.y - i >= 0 and board[self.y - i][self.x - i].piece.color == other_player(self.color):
+            actions.append(Action(self.x, self.y, self.x - i, self.y - i))
+
+        # UP RIGHT
+        i = 1
+        while self.x + i < 8 and self.y - i >= 0 and board[self.y - i][self.x + i].is_empty():
+            actions.append(Action(self.x, self.y, self.x + i, self.y - i))
+            i += 1
+        # found opponent's pieces
+        if self.x + i < 8 and self.y - i >= 0 and board[self.y - i][self.x + i].piece.color == other_player(self.color):
+            actions.append(Action(self.x, self.y, self.x + i, self.y - i))
+
+        # DOWN LEFT
+        i = 1
+        while self.x - i < 8 and self.y + i < 8 and board[self.y + i][self.x - i].is_empty():
+            actions.append(Action(self.x, self.y, self.x - i, self.y + i))
+            i += 1
+        # found opponent's pieces
+        if self.x - i < 8 and self.y + i < 8 and board[self.y + i][self.x - i].piece.color == other_player(self.color):
+            actions.append(Action(self.x, self.y, self.x - i, self.y + i))
+
+        # DOWN RIGHT
+        i = 1
+        while self.x + i < 8 and self.y + i < 8 and board[self.y + i][self.x + i].is_empty():
+            actions.append(Action(self.x, self.y, self.x + i, self.y + i))
+            i += 1
+        # found opponent's pieces
+        if self.x + i < 8 and self.y + i < 8 and board[self.y + i][self.x + i].piece.color == other_player(self.color):
+            actions.append(Action(self.x, self.y, self.x + i, self.y + i))
+
+        return actions
 
 class Queen(Piece):
     def __str__(self):
