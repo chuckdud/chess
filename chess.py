@@ -445,6 +445,7 @@ class Bishop(Piece):
 
         return actions
 
+
 class Queen(Piece):
     def __str__(self):
         if self.color == BLACK:
@@ -533,12 +534,22 @@ class Queen(Piece):
 
         return actions
 
+
 class King(Piece):
     def __str__(self):
         if self.color == BLACK:
             return Fore.BLACK + Style.BRIGHT + " K "
         else:
             return Fore.LIGHTWHITE_EX + Style.BRIGHT + " K "
+
+    def find_actions(self, board):
+        actions = []
+        for i in range(-1, 2):
+            for j in range(-1, 2):
+                if 0 <= self.y + j < 8 and 0 <= self.x + i < 8 and \
+                        (board[self.y + j][self.x + i].is_empty() or board[self.y + j][self.x + i].piece.color == other_player(self.color)):
+                    actions.append(Action(self.x, self.y, self.x + i, self.y + j))
+        return actions
 
 
 # step one:
