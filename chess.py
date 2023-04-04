@@ -5,8 +5,8 @@ WHITE, BLACK = 0, 1
 LIGHT, DARK = 2, 3
 POTENTIAL = 4
 
-move_labels = ['a', 'c', 'd', 'e', 'f', 'g', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
-               'q', 's', 't', 'u', 'v', 'w', 'y', 'z']
+move_labels = ['a', 'c', 'd', 'e', 'f', 'g', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'q', 's', 't', 'u', 'v', 'w', 'y', 'z',
+               '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
 
 def dictify(actions):
@@ -156,7 +156,7 @@ class State:
                 if found_action is not None:
                     for lbl in move_labels:
                         if action_dict[lbl] == found_action:
-                            ret += Back.RED + Fore.WHITE + f" {lbl} " + Style.RESET_ALL
+                            ret += Style.RESET_ALL + Back.RED + Fore.WHITE + f" {lbl} " + Style.RESET_ALL
                             break
                     continue
                 # if self.board[y][x].is_empty() and to_print[y][x] == POTENTIAL:
@@ -314,7 +314,7 @@ class Rook(Piece):
         # LEFT
         i = 1
         while self.x - i >= 0 and board[self.y][self.x - i].is_empty():
-            actions.append(Action(self.x, self.y, self.x - 1, self.y))
+            actions.append(Action(self.x, self.y, self.x - i, self.y))
             i += 1
         # found opponent's piece
         if self.x - i >= 0 and board[self.y][self.x - i].piece.color == other_player(self.color):
@@ -452,6 +452,86 @@ class Queen(Piece):
         else:
             return Fore.LIGHTWHITE_EX + Style.BRIGHT + " Q "
 
+    def find_actions(self, board):
+        actions = []
+
+        # LEFT
+        i = 1
+        while self.x - i >= 0 and board[self.y][self.x - i].is_empty():
+            actions.append(Action(self.x, self.y, self.x - i, self.y))
+            i += 1
+        # found opponent's piece
+        if self.x - i >= 0 and board[self.y][self.x - i].piece.color == other_player(self.color):
+            actions.append(Action(self.x, self.y, self.x - i, self.y))
+
+        # RIGHT
+        i = 1
+        while self.x + i < 8 and board[self.y][self.x + i].is_empty():
+            actions.append(Action(self.x, self.y, self.x + i, self.y))
+            i += 1
+        # found opponent's piece
+        if self.x + i < 8 and board[self.y][self.x + i].piece.color == other_player(self.color):
+            actions.append(Action(self.x, self.y, self.x + i, self.y))
+
+        # UP
+        i = 1
+        while self.y - i >= 0 and board[self.y - i][self.x].is_empty():
+            actions.append(Action(self.x, self.y, self.x, self.y - i))
+            i += 1
+        # found opponent's piece
+        if self.y - i >= 0 and board[self.y - i][self.x].piece.color == other_player(self.color):
+            actions.append(Action(self.x, self.y, self.x, self.y - i))
+
+        # DOWN
+        i = 1
+        while self.y + i < 8 and board[self.y + i][self.x].is_empty():
+            actions.append(Action(self.x, self.y, self.x, self.y + i))
+            i += 1
+        # found opponent's piece
+        if self.y + i < 8 and board[self.y + i][self.x].piece.color == other_player(self.color):
+            actions.append(Action(self.x, self.y, self.x, self.y + i))
+
+        # UP LEFT
+        i = 1
+        while self.x - i >= 0 and self.y - i >= 0 and board[self.y - i][self.x - i].is_empty():
+            actions.append(Action(self.x, self.y, self.x - i, self.y - i))
+            i += 1
+        # found opponent's pieces
+        if self.x - i >= 0 and self.y - i >= 0 and board[self.y - i][self.x - i].piece.color == other_player(
+                self.color):
+            actions.append(Action(self.x, self.y, self.x - i, self.y - i))
+
+        # UP RIGHT
+        i = 1
+        while self.x + i < 8 and self.y - i >= 0 and board[self.y - i][self.x + i].is_empty():
+            actions.append(Action(self.x, self.y, self.x + i, self.y - i))
+            i += 1
+        # found opponent's pieces
+        if self.x + i < 8 and self.y - i >= 0 and board[self.y - i][self.x + i].piece.color == other_player(
+                self.color):
+            actions.append(Action(self.x, self.y, self.x + i, self.y - i))
+
+        # DOWN LEFT
+        i = 1
+        while self.x - i < 8 and self.y + i < 8 and board[self.y + i][self.x - i].is_empty():
+            actions.append(Action(self.x, self.y, self.x - i, self.y + i))
+            i += 1
+        # found opponent's pieces
+        if self.x - i < 8 and self.y + i < 8 and board[self.y + i][self.x - i].piece.color == other_player(
+                self.color):
+            actions.append(Action(self.x, self.y, self.x - i, self.y + i))
+
+        # DOWN RIGHT
+        i = 1
+        while self.x + i < 8 and self.y + i < 8 and board[self.y + i][self.x + i].is_empty():
+            actions.append(Action(self.x, self.y, self.x + i, self.y + i))
+            i += 1
+        # found opponent's pieces
+        if self.x + i < 8 and self.y + i < 8 and board[self.y + i][self.x + i].piece.color == other_player(
+                self.color):
+            actions.append(Action(self.x, self.y, self.x + i, self.y + i))
+
+        return actions
 
 class King(Piece):
     def __str__(self):
